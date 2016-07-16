@@ -5,35 +5,13 @@
     <meta charset="utf-8" />
 
     <title>dates N pixels</title>
-    <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.0.0.min.js"></script>
+		<link rel="stylesheet" type="text/css" href="style.css">
+		<script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.0.0.min.js"></script>
+		<script>if (!window.jQuery) { document.write('<script src="scripts/jquery-3.0.0.min.js"><\/script>'); }</script>
 </head>
 <body>
-    <script>
+    <script src="scripto.js"></script>
 
-        $(document).ready(function () {
-            setit();
-            $(window).resize(function (event) {
-                setit();
-            });
-        });
-
-        function setit (){
-            var wi = $(window).width();
-            var hi = $(window).height();
-
-            $("#w").text(wi);
-            $("#h").text(hi);
-        }
-        
-
-    </script>
-
-    <div>
-        <p id="w"></p>
-    </div> 
-    <div>
-        <p id="h"></p>
-    </div> 
-
+<canvas id="imgHolder" ></canvas>
 </body>
 </html>
