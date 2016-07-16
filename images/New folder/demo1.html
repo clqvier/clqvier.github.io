@@ -1,0 +1,39 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+
+    <title>dates N pixels</title>
+    <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.0.0.min.js"></script>
+</head>
+<body>
+    <script>
+
+        $(document).ready(function () {
+            setit();
+            $(window).resize(function (event) {
+                setit();
+            });
+        });
+
+        function setit (){
+            var wi = $(window).width();
+            var hi = $(window).height();
+
+            $("#w").text(wi);
+            $("#h").text(hi);
+        }
+        
+
+    </script>
+
+    <div>
+        <p id="w"></p>
+    </div> 
+    <div>
+        <p id="h"></p>
+    </div> 
+
+</body>
+</html>
