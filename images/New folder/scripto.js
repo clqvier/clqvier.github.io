@@ -22,17 +22,17 @@
 			var arr = new Uint8Array(width * height * 4);
 			i = 0;
 			while(i < width * height * thisYear / yearCount  ){
-				arr[i*4] = 255;
+				arr[i*4] = 200;
 				arr[i*4+1] = 0;
 				arr[i*4+2] = 0;
 				arr[i*4+3] = 255;
 				i++;
 			}
 			
-			for(var i = width * height  * thisYear / yearCount; i < width * height; i++){
+			for(; i < width * height; i++){
 				arr[i*4] = 0;
 				arr[i*4+1] = 0;
-				arr[i*4+2] = 255;
+				arr[i*4+2] = 200;
 				arr[i*4+3] = 255;
 			
 			}
