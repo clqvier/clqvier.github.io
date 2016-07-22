@@ -1,0 +1,196 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Code doodling (1)</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ 
+    <style>
+        #imgHolder, #triHolder, #curHolder{
+            position: absolute;
+         
+        }
+    </style>
+    
+    <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.0.0.min.js"></script>
+    <script>if (!window.jQuery) { document.write('<script src="scripts/jquery-3.0.0.min.js"><\/script>'); }</script>
+</head>
+<body>
+    <script>
+        var clicked = false;
+        var imgContext;
+        var triContext;
+        var curContext;
+        var MAR_ = 40;
+        var STR_ = 20;
+        var WI_;
+        var HI_;
+        var tri = new Array();
+        var poi = new Array();
+        var currPoi = [-1, -1];
+        var MIN_DIS_ = 4;
+        var RATE_ = 0.9;
+
+        $(document).ready(function () {
+            setit();
+            $(window).resize(function (event) {
+                if (!clicked)
+                    setit();
+            });
+
+            curHolder.addEventListener("mousemove", function (e) {
+                curContext.clearRect(currPoi[0], currPoi[1], STR_, STR_);
+                currPoi = getCoor(e);
+                curContext.fillRect(currPoi[0], currPoi[1], STR_, STR_);
+            });
+
+            curHolder.addEventListener("click", function (e) {
+                if (tri[0] == currPoi) {
+                    drawIt(tri);
+                    for (var i = 0; i < tri.length; i++) {
+                        triContext.clearRect(tri[i][0], tri[i][1], STR_, STR_);
+                    }
+                    tri = new Array();
+                    return;
+                }
+                clicked = true;
+                tri.push(currPoi);
+                poi.push(currPoi);
+                imgContext.fillRect(currPoi[0], currPoi[1], STR_, STR_);
+                triContext.fillRect(currPoi[0], currPoi[1], STR_, STR_);
+            });
+        });
+
+        function drawIt(tri) {
+            var tempTri = tri;
+            while (distancesEnough(tempTri)) {
+                imgContext.beginPath();
+                imgContext.moveTo(tempTri[0][0], tempTri[0][1]);
+                for (var i = 0; i < tempTri.length; i++) {
+                    imgContext.lineTo(tempTri[i][0], tempTri[i][1]);
+                }
+                imgContext.closePath();
+                imgContext.stroke();
+
+                var temptempTri = new Array();
+                for (var i = 0; i < tempTri.length - 1; i++) {
+                    temptempTri.push(findMed(tempTri[i], tempTri[i + 1]));
+                }
+                temptempTri.push(findMed(tempTri[tempTri.length - 1], tempTri[0]));
+                tempTri = temptempTri;
+            }
+        }
+
+        function distancesEnough(tri) {
+            for (var i = 0; i < tri.length - 1; i++) {
+                if (distance(tri[i], tri[i + 1]) < MIN_DIS_)
+                    return false;
+            }
+            if(distance(tri[0], tri[tri.length -1]) < MIN_DIS_)
+                return false;
+            return true;
+        }
+
+        function distance(pA, pB)
+        {
+            var x = (pA[0] - pB[0]) * (pA[0] - pB[0]);
+            var y = (pA[1] - pB[1]) * (pA[1] - pB[1]);
+            return  Math.sqrt(x + y);
+        }
+
+        function findMed(pA, pB) {
+            var x = (pB[0] - pA[0]) * RATE_ + pA[0];
+            var y = (pB[1] - pA[1]) * RATE_ + pA[1];
+            return [x, y];
+        }
+
+        function getCoor(e) {
+            var screenCoor = getScreenCoor(e);
+            return getRealCoor(screenCoor);
+        }
+
+        function getScreenCoor(e) {
+            var x;
+            var y;
+            if (e.pageX || e.pageY) {
+                x = e.pageX;
+                y = e.pageY;
+            }
+            else {
+                x = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+                y = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+            }
+            x -= curHolder.offsetLeft;
+            y -= curHolder.offsetTop;
+            return [x, y];
+        }
+
+        function getRealCoor(screenCoor) {
+            var x = screenCoor[0];
+            var y = screenCoor[1];
+
+            if (x < MAR_ * 2) x = MAR_;
+            if (y < MAR_ * 2) y = MAR_;
+            if (x > WI_ - MAR_ * 2 - STR_) x = WI_ - MAR_ - STR_;
+            if (y > HI_ - MAR_ * 2 - STR_) y = HI_ - MAR_ - STR_;
+            for (var i = 0; i < poi.length; i++) {
+                if (rectDistance(x, y, poi[i]) < MAR_) {
+                    return poi[i];
+                }
+            }
+
+
+            return [x, y];
+        }
+
+        function rectDistance(x, y, thePoint) {
+            return Math.max(Math.abs(thePoint[0] - x), Math.abs(thePoint[1] - y));
+        }
+
+        function setit() {
+            WI_ = $(window).width() - 20;
+            HI_ = $(window).height() - 60;
+
+            imgHolder.width = WI_;
+            imgHolder.height = HI_;
+            triHolder.width = WI_;
+            triHolder.height = HI_;
+            curHolder.width = WI_;
+            curHolder.height = HI_;
+
+            imgContext = imgHolder.getContext('2d');
+            triContext = triHolder.getContext('2d');
+            curContext = curHolder.getContext('2d');
+
+            imgContext.fillStyle = "rgba(200, 200, 200, 255)";
+            imgContext.fillRect(0, 0, WI_, HI_);
+            triContext.fillStyle = "rgba(222, 222, 22, 255)";
+            curContext.fillStyle = "rgba(22, 222, 22, 255)";
+
+            var gra = imgContext.createLinearGradient(0, 0, WI_, HI_);
+            gra.addColorStop(0, "rgba(222, 0, 22, 255)");
+            gra.addColorStop(1, "rgba(22, 0, 222, 255)");
+            imgContext.fillStyle = gra;
+
+            imgContext.beginPath();
+            imgContext.moveTo(MAR_, MAR_);
+            imgContext.lineTo(MAR_, HI_ - MAR_);
+            imgContext.lineTo(WI_ - MAR_, HI_ - MAR_);
+            imgContext.lineTo(WI_ - MAR_, MAR_);
+            imgContext.lineTo(MAR_, MAR_);
+            imgContext.stroke();
+        }
+
+        function onlick()
+        {
+            clicked = true;
+        }
+    </script>
+
+    <canvas id="imgHolder"></canvas>
+    <canvas id="triHolder"></canvas>
+    <canvas id="curHolder"></canvas>
+</body>
+</html>
