@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
  
     <style>
-        #imgHolder, #triHolder, #curHolder{
+        #imgHolder, #triHolder, #eacHolder, #curHolder{
             position: absolute;
          
         }
@@ -20,18 +20,24 @@
 <body>
     <script>
         var clicked = false;
+        var eachClicked = false;
         var imgContext;
         var triContext;
         var curContext;
+        var eacContext;
         var MAR_ = 40;
         var STR_ = 20;
         var WI_;
         var HI_;
-        var tri = new Array();
-        var poi = new Array();
-        var currPoi = [-1, -1];
+        var tri = [];
+        var poi = [];
+        var waypoi = [];
+        var allTri = [];
+        var currPoi = [];
         var MIN_DIS_ = 4;
-        var RATE_ = 0.9;
+        var RATE_ = 0.1;
+        var GAP_ = 3;
+        var t;
 
         $(document).ready(function () {
             setit();
@@ -40,56 +46,95 @@
                     setit();
             });
 
-            curHolder.addEventListener("mousemove", function (e) {
-                curContext.clearRect(currPoi[0], currPoi[1], STR_, STR_);
-                currPoi = getCoor(e);
-                curContext.fillRect(currPoi[0], currPoi[1], STR_, STR_);
-            });
+            curHolder.addEventListener("mousemove", mousemove);
 
-            curHolder.addEventListener("click", function (e) {
-                if (tri[0] == currPoi) {
-                    drawIt(tri);
-                    for (var i = 0; i < tri.length; i++) {
-                        triContext.clearRect(tri[i][0], tri[i][1], STR_, STR_);
-                    }
-                    tri = new Array();
-                    return;
-                }
-                clicked = true;
-                tri.push(currPoi);
-                poi.push(currPoi);
-                imgContext.fillRect(currPoi[0], currPoi[1], STR_, STR_);
-                triContext.fillRect(currPoi[0], currPoi[1], STR_, STR_);
-            });
+            curHolder.addEventListener("click", click);
         });
 
-        function drawIt(tri) {
-            var tempTri = tri;
-            while (distancesEnough(tempTri)) {
-                imgContext.beginPath();
-                imgContext.moveTo(tempTri[0][0], tempTri[0][1]);
-                for (var i = 0; i < tempTri.length; i++) {
-                    imgContext.lineTo(tempTri[i][0], tempTri[i][1]);
-                }
-                imgContext.closePath();
-                imgContext.stroke();
+        function mousemove(e) {
+            curContext.clearRect(currPoi[0], currPoi[1], STR_, STR_);
+            currPoi = getCoor(e);
+            curContext.fillRect(currPoi[0], currPoi[1], STR_, STR_);
 
-                var temptempTri = new Array();
-                for (var i = 0; i < tempTri.length - 1; i++) {
-                    temptempTri.push(findMed(tempTri[i], tempTri[i + 1]));
+            if (eachClicked) {
+                eacContext.clearRect(0, 0, WI_, HI_);
+                eacContext.beginPath();
+                eacContext.moveTo(tri[0][0], tri[0][1]);
+                for (var i = 1; i < tri.length; i++) {
+                    eacContext.lineTo(tri[i][0], tri[i][1]);
                 }
-                temptempTri.push(findMed(tempTri[tempTri.length - 1], tempTri[0]));
-                tempTri = temptempTri;
+                eacContext.lineTo(currPoi[0], currPoi[1]);
+                eacContext.stroke();
             }
         }
 
-        function distancesEnough(tri) {
-            for (var i = 0; i < tri.length - 1; i++) {
-                if (distance(tri[i], tri[i + 1]) < MIN_DIS_)
+        function click(e) {
+            if (tri[0] == currPoi) {
+                tri.push(currPoi);
+                t = 1;
+                calcwayPoi1();
+                calcwayPoi2();
+                animate();
+                triContext.clearRect(0, 0, WI_, HI_);
+                eacContext.clearRect(0, 0, WI_, HI_);
+                tri = [];
+                eachClicked = false;
+                return;
+            }
+            if (tri[tri.length - 1] == currPoi) {
+                tri.splice(tri.length - 1, 1);
+                imgContext.clearRect(currPoi[0], currPoi[1], STR_, STR_);
+                triContext.clearRect(currPoi[0], currPoi[1], STR_, STR_);
+                return;
+            }
+            clicked = true;
+            eachClicked = true;
+            tri.push(currPoi);
+            poi.push(currPoi);
+            imgContext.fillRect(currPoi[0], currPoi[1], STR_, STR_);
+            triContext.fillRect(currPoi[0], currPoi[1], STR_, STR_);
+        }
+
+
+        function calcwayPoi1() {
+            allTri = tri.slice();
+            while (distancesEnough()) {
+                var med = findMed(allTri[allTri.length - tri.length + 1], allTri[allTri.length - tri.length + 2]);
+                allTri.push(med);
+            }
+        }
+
+        function calcwayPoi2() {
+            waypoi = [];
+            for (var i = 1; i < allTri.length; i++) {
+                var pt0 = allTri[i - 1];
+                var pt1 = allTri[i];
+                var dx = pt1[0] - pt0[0];
+                var dy = pt1[1] - pt0[1];
+                for (var j = 0; j < GAP_; j++) {
+                    var x = pt0[0] + dx * j / GAP_;
+                    var y = pt0[1] + dy * j / GAP_;
+                    waypoi.push([x,y]);
+                }
+            }
+        }
+
+        function animate() {
+            if (t < waypoi.length - 1) {
+                requestAnimationFrame(animate);
+            }
+            imgContext.beginPath();
+            imgContext.moveTo(waypoi[t - 1][0], waypoi[t - 1][1]);
+            imgContext.lineTo(waypoi[t][0], waypoi[t][1]);
+            imgContext.stroke();
+            t++;
+        }
+
+        function distancesEnough() {
+            for (var i = allTri.length - tri.length; i < allTri.length - 1; i++) {
+                if (distance(allTri[i], allTri[i + 1]) < MIN_DIS_)
                     return false;
             }
-            if(distance(tri[0], tri[tri.length -1]) < MIN_DIS_)
-                return false;
             return true;
         }
 
@@ -157,16 +202,22 @@
             imgHolder.height = HI_;
             triHolder.width = WI_;
             triHolder.height = HI_;
+            eacHolder.width = WI_;
+            eacHolder.height = HI_;
             curHolder.width = WI_;
             curHolder.height = HI_;
 
             imgContext = imgHolder.getContext('2d');
             triContext = triHolder.getContext('2d');
+            eacContext = eacHolder.getContext('2d');
             curContext = curHolder.getContext('2d');
 
-            imgContext.fillStyle = "rgba(200, 200, 200, 255)";
-            imgContext.fillRect(0, 0, WI_, HI_);
+            //imgContext.fillStyle = "rgba(200, 200, 200, 255)";
+            //imgContext.fillRect(0, 0, WI_, HI_);
+            imgContext.lineWidth = 2
             triContext.fillStyle = "rgba(222, 222, 22, 255)";
+            eacContext.strokeStyle = "rgba(22, 222, 22, 255)";
+            eacContext.lineWidth = 4;
             curContext.fillStyle = "rgba(22, 222, 22, 255)";
 
             var gra = imgContext.createLinearGradient(0, 0, WI_, HI_);
@@ -174,7 +225,7 @@
             gra.addColorStop(1, "rgba(22, 0, 222, 255)");
             imgContext.fillStyle = gra;
 
-            imgContext.beginPath();
+            // imgContext.beginPath();
             imgContext.moveTo(MAR_, MAR_);
             imgContext.lineTo(MAR_, HI_ - MAR_);
             imgContext.lineTo(WI_ - MAR_, HI_ - MAR_);
@@ -191,6 +242,7 @@
 
     <canvas id="imgHolder"></canvas>
     <canvas id="triHolder"></canvas>
+    <canvas id="eacHolder"></canvas>
     <canvas id="curHolder"></canvas>
 </body>
 </html>
