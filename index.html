@@ -36,7 +36,7 @@
         var currPoi = [];
         var MIN_DIS_ = 4;
         var RATE_ = 0.1;
-        var GAP_ = 3;
+        var GAP_ = 50;
         var t;
 
         $(document).ready(function () {
@@ -111,10 +111,38 @@
                 var pt1 = allTri[i];
                 var dx = pt1[0] - pt0[0];
                 var dy = pt1[1] - pt0[1];
-                for (var j = 0; j < GAP_; j++) {
-                    var x = pt0[0] + dx * j / GAP_;
-                    var y = pt0[1] + dy * j / GAP_;
-                    waypoi.push([x,y]);
+if (Math.abs(dx) > Math.abs(dy)) {
+				    if (dx > 0) {
+				        for (var j = 0; j < dx; j = j + GAP_) {
+				            var x = pt0[0] + j;
+				            var y = pt0[1] + j / dx * dy;
+				            waypoi.push([x, y]);
+				        }
+				    }
+				    else {
+				        for (var j = 0; j > dx; j = j - GAP_) {
+				            var x = pt0[0] + j;
+				            var y = pt0[1] + j / dx * dy;
+				            waypoi.push([x, y]);
+				        }
+				    }
+				}
+				else {
+				    if (dy > 0) {
+				        for (var j = 0; j < dy; j = j + GAP_) {
+				            var y = pt0[1] + j;
+				            var x = pt0[0] + j / dy * dx;
+				            waypoi.push([x, y]);
+				        }
+				    }
+				    else {
+				        for (var j = 0; j > dy; j = j - GAP_) {
+				            var y = pt0[1] + j;
+				            var x = pt0[0] + j / dy * dx;
+				            waypoi.push([x, y]);
+				        }
+				    }
+				}
                 }
             }
         }
