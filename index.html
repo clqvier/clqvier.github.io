@@ -111,41 +111,41 @@
                 var pt1 = allTri[i];
                 var dx = pt1[0] - pt0[0];
                 var dy = pt1[1] - pt0[1];
-if (Math.abs(dx) > Math.abs(dy)) {
-				    if (dx > 0) {
-				        for (var j = 0; j < dx; j = j + GAP_) {
-				            var x = pt0[0] + j;
-				            var y = pt0[1] + j / dx * dy;
-				            waypoi.push([x, y]);
-				        }
-				    }
-				    else {
-				        for (var j = 0; j > dx; j = j - GAP_) {
-				            var x = pt0[0] + j;
-				            var y = pt0[1] + j / dx * dy;
-				            waypoi.push([x, y]);
-				        }
-				    }
+		if (Math.abs(dx) > Math.abs(dy)) {
+			if (dx > 0) {
+				for (var j = 0; j < dx; j = j + GAP_) {
+					var x = pt0[0] + j;
+					var y = pt0[1] + j / dx * dy;
+					waypoi.push([x, y]);
 				}
-				else {
-				    if (dy > 0) {
-				        for (var j = 0; j < dy; j = j + GAP_) {
-				            var y = pt0[1] + j;
-				            var x = pt0[0] + j / dy * dx;
-				            waypoi.push([x, y]);
-				        }
-				    }
-				    else {
-				        for (var j = 0; j > dy; j = j - GAP_) {
-				            var y = pt0[1] + j;
-				            var x = pt0[0] + j / dy * dx;
-				            waypoi.push([x, y]);
-				        }
-				    }
+			}
+			else {
+				for (var j = 0; j > dx; j = j - GAP_) {
+					var x = pt0[0] + j;
+					var y = pt0[1] + j / dx * dy;
+					waypoi.push([x, y]);
 				}
-                }
-            }
+			}
+		}
+		else {
+			if (dy > 0) {
+				for (var j = 0; j < dy; j = j + GAP_) {
+				    var y = pt0[1] + j;
+				    var x = pt0[0] + j / dy * dx;
+				    waypoi.push([x, y]);
+				}
+			}
+			else {
+				for (var j = 0; j > dy; j = j - GAP_) {
+				    var y = pt0[1] + j;
+				    var x = pt0[0] + j / dy * dx;
+				    waypoi.push([x, y]);
+				}
+			}
+		}
+          }
         }
+        
 
         function animate() {
             if (t < waypoi.length - 1) {
