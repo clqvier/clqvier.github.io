@@ -3,52 +3,58 @@
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8" />
-    <title>Code doodling (1)</title>
+    <title>Doodling</title>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
  
-    <style>
-        #imgHolder, #triHolder, #eacHolder, #curHolder{
-            position: absolute;
-         
-        }
-    </style>
-    
     <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.0.0.min.js"></script>
     <script>if (!window.jQuery) { document.write('<script src="scripts/jquery-3.0.0.min.js"><\/script>'); }</script>
 </head>
 <body>
+    <script type="text/javascript" src="scripts/jscolor.js"></script>
     <script>
         var clicked = false;
         var eachClicked = false;
-        var imgContext;
-        var triContext;
-        var curContext;
-        var eacContext;
-        var MAR_ = 40;
-        var STR_ = 20;
+        var bgaContext; //background animation
+        var bgrContext; //background scene
+        var imgContext; 
+        var triContext; //current polygon points
+        var curContext; //cursor scene
+        var eacContext; //current polygon lines
+        var MAR_ = 20; //margin in canvas
+        var STR_ = 20; //mouse pointer size
         var WI_;
         var HI_;
+        var STEP_WH = 6;
         var tri = [];
+        var triCopy;
         var poi = [];
         var waypoi = [];
         var allTri = [];
         var currPoi = [];
-        var MIN_DIS_ = 4;
-        var RATE_ = 0.1;
-        var GAP_ = 50;
+        var MIN_DIS_ = 1;
+        var RATE_ = 0.07; //med rate
+        var GAP_ = 25;
         var t;
-
+        var rgb1 = [0x11, 0, 0x11];
+        var rgb2 = [0x99, 0, 0x99];
+        var fillCount;
+        var startFill;
         $(document).ready(function () {
             setit();
-            $(window).resize(function (event) {
-                if (!clicked)
-                    setit();
-            });
+       //     $(window).resize(function (event) {
+       //         if (!clicked)
+       //             setit();
+       //     });
+            window.addEventListener("resize",
+                function () {
+                    if (!clicked)
+                        setit();
+                });
+            imgHolder.addEventListener("mousemove", mousemove);
+            imgHolder.addEventListener("click", click);
+            btnClear.addEventListener("click", setit);
 
-            curHolder.addEventListener("mousemove", mousemove);
-
-            curHolder.addEventListener("click", click);
         });
 
         function mousemove(e) {
@@ -72,8 +78,14 @@
             if (tri[0] == currPoi) {
                 tri.push(currPoi);
                 t = 1;
-                calcwayPoi1();
+                if (chkWayPoi.checked)
+                    calcwayPoi1_alt();
+                else
+                    calcwayPoi1();
                 calcwayPoi2();
+                fillCount = tri.length;
+                triCopy = tri.slice();
+                startFill = false;
                 animate();
                 triContext.clearRect(0, 0, WI_, HI_);
                 eacContext.clearRect(0, 0, WI_, HI_);
@@ -83,7 +95,7 @@
             }
             if (tri[tri.length - 1] == currPoi) {
                 tri.splice(tri.length - 1, 1);
-                imgContext.clearRect(currPoi[0], currPoi[1], STR_, STR_);
+                //imgContext.clearRect(currPoi[0], currPoi[1], STR_, STR_);
                 triContext.clearRect(currPoi[0], currPoi[1], STR_, STR_);
                 return;
             }
@@ -91,7 +103,7 @@
             eachClicked = true;
             tri.push(currPoi);
             poi.push(currPoi);
-            imgContext.fillRect(currPoi[0], currPoi[1], STR_, STR_);
+            //imgContext.fillRect(currPoi[0], currPoi[1], STR_, STR_);
             triContext.fillRect(currPoi[0], currPoi[1], STR_, STR_);
         }
 
@@ -104,6 +116,19 @@
             }
         }
 
+        function calcwayPoi1_alt() {
+            allTri = tri.slice();
+            while (distancesEnough()) {
+                for (var i = 0; i < tri.length - 1; i++) {
+                    var med = findMed(allTri[allTri.length - tri.length], allTri[allTri.length - tri.length + 1]);
+                    allTri.push(med);
+                }
+                var med = allTri[allTri.length - tri.length + 1];//findMed(allTri[allTri.length - tri.length + 1], allTri[allTri.length - 2 * tri.length]);
+                allTri.push(med);
+
+            }
+        }
+
         function calcwayPoi2() {
             waypoi = [];
             for (var i = 1; i < allTri.length; i++) {
@@ -111,39 +136,39 @@
                 var pt1 = allTri[i];
                 var dx = pt1[0] - pt0[0];
                 var dy = pt1[1] - pt0[1];
-		if (Math.abs(dx) > Math.abs(dy)) {
-			if (dx > 0) {
-				for (var j = 0; j < dx; j = j + GAP_) {
-					var x = pt0[0] + j;
-					var y = pt0[1] + j / dx * dy;
-					waypoi.push([x, y]);
-				}
-			}
-			else {
-				for (var j = 0; j > dx; j = j - GAP_) {
-					var x = pt0[0] + j;
-					var y = pt0[1] + j / dx * dy;
-					waypoi.push([x, y]);
-				}
-			}
-		}
-		else {
-			if (dy > 0) {
-				for (var j = 0; j < dy; j = j + GAP_) {
-				    var y = pt0[1] + j;
-				    var x = pt0[0] + j / dy * dx;
-				    waypoi.push([x, y]);
-				}
-			}
-			else {
-				for (var j = 0; j > dy; j = j - GAP_) {
-				    var y = pt0[1] + j;
-				    var x = pt0[0] + j / dy * dx;
-				    waypoi.push([x, y]);
-				}
-			}
-		}
-          }
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    if (dx > 0) {
+                        for (var j = 0; j < dx; j = j + GAP_) {
+                            var x = pt0[0] + j;
+                            var y = pt0[1] + j / dx * dy;
+                            waypoi.push([x, y]);
+                        }
+                    }
+                    else {
+                        for (var j = 0; j > dx; j = j - GAP_) {
+                            var x = pt0[0] + j;
+                            var y = pt0[1] + j / dx * dy;
+                            waypoi.push([x, y]);
+                        }
+                    }
+                }
+                else {
+                    if (dy > 0) {
+                        for (var j = 0; j < dy; j = j + GAP_) {
+                            var y = pt0[1] + j;
+                            var x = pt0[0] + j / dy * dx;
+                            waypoi.push([x, y]);
+                        }
+                    }
+                    else {
+                        for (var j = 0; j > dy; j = j - GAP_) {
+                            var y = pt0[1] + j;
+                            var x = pt0[0] + j / dy * dx;
+                            waypoi.push([x, y]);
+                        }
+                    }
+                }
+            }
         }
         
 
@@ -151,11 +176,92 @@
             if (t < waypoi.length - 1) {
                 requestAnimationFrame(animate);
             }
-            imgContext.beginPath();
-            imgContext.moveTo(waypoi[t - 1][0], waypoi[t - 1][1]);
-            imgContext.lineTo(waypoi[t][0], waypoi[t][1]);
-            imgContext.stroke();
+            if (false) {
+
+            }
+            else {
+                imgContext.lineWidth = 0.5;
+                imgContext.strokeStyle = "rgba("
+                        + Math.round(rgb1[0]) + ", "
+                        + Math.round(rgb1[1]) + ", "
+                        + Math.round(rgb1[2]) + ", 1)";
+                imgContext.beginPath();
+                imgContext.moveTo(waypoi[t - 1][0], waypoi[t - 1][1]);
+                imgContext.lineTo(waypoi[t][0], waypoi[t][1]);
+                imgContext.stroke();
+
+
+                if (waypoi[t][0] == allTri[fillCount][0] && waypoi[t][1] == allTri[fillCount][1]) {
+                    startFill = true;
+                }
+
+                if (startFill) {
+                    //var fillColor = Math.abs(2 * fillCount % 300 - 150);
+                    //var fillColor = Math.round(250 - Math.sqrt(fillCount / allTri.length) * 250);
+                    var fillColor = GetFillColor(fillCount);
+                    var thecolor = "rgba("
+                        + Math.round(fillColor[0]) + ", "
+                        + Math.round(fillColor[1]) + ", "
+                        + Math.round(fillColor[2]) + ", 1)";
+                    imgContext.strokeStyle = thecolor;
+                    //imgContext.moveTo(allTri[fillCount][0], allTri[fillCount][1]);
+                    imgContext.moveTo(waypoi[t][0], waypoi[t][1]);
+                    imgContext.lineTo(allTri[fillCount - 1][0], allTri[fillCount - 1][1]);
+                    imgContext.lineTo(allTri[fillCount - triCopy.length + 1][0], allTri[fillCount - triCopy.length + 1][1]);
+                    imgContext.closePath();
+                    imgContext.fillStyle = thecolor;
+                    imgContext.fill();
+
+                }
+
+                if (waypoi[t][0] == allTri[fillCount][0] && waypoi[t][1] == allTri[fillCount][1]) {
+                    fillCount++;
+                }
+            }
+            bgaContext.beginPath();
+            bgaContext.moveTo(bgraX(waypoi[t - 1][0]), bgraY(waypoi[t - 1][1]));
+            bgaContext.lineTo(bgraX(waypoi[t][0]), bgraY(waypoi[t][1]));
+            bgaContext.stroke();
+
             t++;
+        }
+
+        function update1(picker) {
+            rgb1 = picker.rgb;
+        }
+
+        function update2(picker) {
+            rgb2 = picker.rgb;
+        }
+
+        function GetFillColor(fillCount) {
+            var sum1 = Math.abs(rgb1[0] - rgb2[0]);
+            var sum2 = Math.abs(rgb1[1] - rgb2[1]);
+            var sum3 = Math.abs(rgb1[2] - rgb2[2]);
+            var colorstepSum = sum1 + sum2 + sum3;
+            var colorperStep = colorstepSum / allTri.length;
+            var colorSum = fillCount * colorperStep;
+            if (colorSum < sum1)
+                return rgb2[0] > rgb1[0] ?
+                    [rgb1[0] + colorSum, rgb1[1], rgb1[2]]
+                    : [rgb1[0] - colorSum, rgb1[1], rgb1[2]];
+            else if (colorSum < sum1 + sum2)
+                return rgb2[1] > rgb1[1] ?
+                    [rgb2[0], rgb1[1] + (colorSum - sum1), rgb1[2]]
+                    : [rgb2[0], rgb1[1] - (colorSum - sum1), rgb1[2]];
+            else
+                return rgb2[2] > rgb1[2] ?
+                    [rgb2[0], rgb2[1], rgb1[2] + (colorSum - sum1 - sum2)]
+                    : [rgb2[0], rgb2[1], rgb1[2] - (colorSum - sum1 - sum2)];
+        }
+
+
+        function bgraX(waypoiX) {
+            return WI_ - (waypoiX - MAR_) / (WI_ - 2 * MAR_) * WI_;
+
+        }
+        function bgraY(waypoiY) {
+            return HI_ - (waypoiY - MAR_) / (HI_ - 2 * MAR_) * HI_;
         }
 
         function distancesEnough() {
@@ -204,12 +310,12 @@
             var x = screenCoor[0];
             var y = screenCoor[1];
 
-            if (x < MAR_ * 2) x = MAR_;
-            if (y < MAR_ * 2) y = MAR_;
-            if (x > WI_ - MAR_ * 2 - STR_) x = WI_ - MAR_ - STR_;
-            if (y > HI_ - MAR_ * 2 - STR_) y = HI_ - MAR_ - STR_;
+            if (x < MAR_ + STR_) x = MAR_;
+            if (y < MAR_ + STR_) y = MAR_;
+            if (x > WI_ - MAR_ - STR_) x = WI_ - MAR_;
+            if (y > HI_ - MAR_ - STR_) y = HI_ - MAR_;
             for (var i = 0; i < poi.length; i++) {
-                if (rectDistance(x, y, poi[i]) < MAR_) {
+                if (rectDistance(x, y, poi[i]) < STR_) {
                     return poi[i];
                 }
             }
@@ -223,9 +329,21 @@
         }
 
         function setit() {
-            WI_ = $(window).width() - 20;
-            HI_ = $(window).height() - 60;
+            clicked = false;
+            eachClicked = false;
+            tri = [];
+            poi = [];
+            waypoi = [];
+            allTri = [];
+            currPoi = [];
 
+            WI_ = window.innerWidth - 20;
+            HI_ = window.innerHeight - 100;
+            
+            bgaHolder.width = WI_;
+            bgaHolder.height = HI_;
+            bgrHolder.width = WI_;
+            bgrHolder.height = HI_;
             imgHolder.width = WI_;
             imgHolder.height = HI_;
             triHolder.width = WI_;
@@ -235,42 +353,186 @@
             curHolder.width = WI_;
             curHolder.height = HI_;
 
+            bgaContext = bgaHolder.getContext('2d');
+            bgrContext = bgrHolder.getContext('2d');
             imgContext = imgHolder.getContext('2d');
             triContext = triHolder.getContext('2d');
             eacContext = eacHolder.getContext('2d');
             curContext = curHolder.getContext('2d');
-
-            //imgContext.fillStyle = "rgba(200, 200, 200, 255)";
-            //imgContext.fillRect(0, 0, WI_, HI_);
-            imgContext.lineWidth = 2
-            triContext.fillStyle = "rgba(222, 222, 22, 255)";
-            eacContext.strokeStyle = "rgba(22, 222, 22, 255)";
-            eacContext.lineWidth = 4;
-            curContext.fillStyle = "rgba(22, 222, 22, 255)";
-
+            
             var gra = imgContext.createLinearGradient(0, 0, WI_, HI_);
-            gra.addColorStop(0, "rgba(222, 0, 22, 255)");
-            gra.addColorStop(1, "rgba(22, 0, 222, 255)");
-            imgContext.fillStyle = gra;
+            gra.addColorStop(0, "rgba(222, 0, 22, 1)");
+            gra.addColorStop(1, "rgba(22, 0, 222, 1)");
+            triContext.fillStyle = gra;
+            eacContext.strokeStyle = "rgba(22, 222, 222, 1)";
+            eacContext.lineWidth = 4;
+            curContext.fillStyle = "rgba(22, 222, 222, 1)";
+            //grid
+            bgrContext.globalAlpha = 0.8;
+            bgrContext.fillStyle = "rgba(211, 211, 222, 1)";
+            bgrContext.fillRect(MAR_, MAR_, WI_ - 2 * MAR_, HI_ - 2 * MAR_);
+            var stepW = (WI_ - 4 * MAR_) / STEP_WH;
+            var stepH = (HI_ - 4 * MAR_) / STEP_WH;
+            bgrContext.beginPath();
+            bgrContext.strokeStyle = "rgba(244, 244, 244, 1)";
+            for (var i = 0; i <= STEP_WH; i++) {
+                bgrContext.moveTo(2 * MAR_ + i * stepW, MAR_);//Ver
+                bgrContext.lineTo(2 * MAR_ + i * stepW, HI_ - MAR_);
+                bgrContext.moveTo(MAR_, 2 * MAR_ + i * stepH);//Hor
+                bgrContext.lineTo(WI_ - MAR_, 2 * MAR_ + i * stepH);
+            }
+            bgrContext.stroke();
 
-            // imgContext.beginPath();
-            imgContext.moveTo(MAR_, MAR_);
-            imgContext.lineTo(MAR_, HI_ - MAR_);
-            imgContext.lineTo(WI_ - MAR_, HI_ - MAR_);
-            imgContext.lineTo(WI_ - MAR_, MAR_);
-            imgContext.lineTo(MAR_, MAR_);
-            imgContext.stroke();
+            bgaContext.lineWidth = 12;
+            bgaContext.strokeStyle = "rgba(22, 22, 22, 1)";
+
+            imgContext.lineWidth = 3;
+            imgContext.lineCap = "round";
+            imgContext.strokeStyle = "rgba(88, 55, 88, 1)";
         }
-
+        
         function onlick()
         {
             clicked = true;
         }
     </script>
-
-    <canvas id="imgHolder"></canvas>
+    <canvas id="bgaHolder"></canvas>
+    <canvas id="bgrHolder"></canvas>
     <canvas id="triHolder"></canvas>
     <canvas id="eacHolder"></canvas>
     <canvas id="curHolder"></canvas>
+
+    <canvas id="imgHolder"></canvas>
+
+    <button id="btnClear">Clear</button>
+
+
+    <div id="hovWayPoi">
+        <input type="checkbox" id="chkWayPoi" />
+        <label id="lblWayPoi" for="chkWayPoi">Modified drawing method</label>
+        <div id="divWayPoi">
+        
+        </div>
+    </div>
+
+    <input type="checkbox" id="chkFill" />
+    <label id="lblFill" for="chkFill">Fill</label>
+
+    <input name="color1" type="hidden" id="color_value1" value="110011" />>
+    <button class="jscolor {valueElement: 'color_value1', onFineChange:'update1(this)'}" id="btncolor1">color1</button>  
+    <input name="color2" type="hidden" id="color_value2" value="990099" />>
+    <button class="jscolor {valueElement: 'color_value2', onFineChange:'update2(this)'}" id="btncolor2">color2</button>    
+
+
+    <label id="lblAbout">About</label>
+   
+    <style>
+        #bgaHolder, #bgrHolder,#imgHolder, #triHolder, #eacHolder, #curHolder {
+            position: absolute;
+            top: 20px;
+        }
+
+        body {
+            background-color: rgb(22, 0, 22);
+        }
+
+
+        #btnClear, #btncolor1, #btncolor2{
+            position: absolute;
+            top: 5px; 
+        	display:inline-block;
+            font-family: Arial;
+            font-size: 14px;
+        	cursor:pointer;
+        	font-weight:bold;
+        	padding:4px 5px;
+        }
+
+        #btnClear {
+            left: 30px;
+        	background:linear-gradient(to bottom, #5f59b3 5%, #404099 100%);
+        	color:#ffffff;
+        }
+
+        #btncolor1 {
+            left: 150px;
+        	display:inline-block;
+        }
+
+        #btncolor2 {
+            left: 210px;
+        	display:inline-block;
+        }
+
+
+        #btnClear:hover {
+        	background:linear-gradient(to bottom, #404099 5%, #5f59b3 100%);
+        }
+
+        #chkWayPoi {
+            position:absolute;
+            left: 120px;
+            top: 10px; 
+        }
+        
+        #lblWayPoi {
+            position:absolute;
+            left: 140px;
+            top: 10px; 
+            font-family: Arial;
+            font-size: 14px;
+        	cursor:pointer;
+        	color:#ffffff;
+        	font-weight:bold;
+        }
+
+        #chkFill {
+            position:absolute;
+            left: 100px;
+            top: 10px; 
+        }
+        
+        #lblFill {
+            position:absolute;
+            left: 120px;
+            top: 10px; 
+            font-family: Arial;
+            font-size: 14px;
+        	cursor:pointer;
+        	color:#ffffff;
+        	font-weight:bold;
+        }
+
+
+        #hovWayPoi {
+            display:none;
+        }
+
+        #hovWayPoi:hover #divWayPoi {
+            display:block;
+        }
+
+        #divWayPoi {
+            position:absolute;
+            left: 126px;
+            top: 26px;
+            width: 240px;
+            height: 240px;
+            background-color: #ffffff;
+            display: none;
+        }
+
+        #lblAbout {
+            position:absolute;
+            right: 30px;
+            top: 10px; 
+            font-family: Arial;
+            font-size: 14px;
+        	cursor:pointer;
+        	color:#ffffff;
+        	font-weight:bold;
+        }
+
+    </style>
 </body>
 </html>
