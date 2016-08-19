@@ -32,12 +32,12 @@
         var waypoi = [];
         var allTri = [];
         var currPoi = [];
-        var MIN_DIS_ = 1;
-        var RATE_ = 0.07; //med rate
+        var MIN_DIS_ = 2.5;
+        var RATE_ = 0.12; //med rate
         var GAP_ = 25;
         var t;
-        var rgb1 = [0x11, 0, 0x11];
-        var rgb2 = [0x99, 0, 0x99];
+        var rgb1 = [178, 255, 0];
+        var rgb2 = [255, 0, 255];
         var fillCount;
         var startFill;
         $(document).ready(function () {
@@ -176,15 +176,23 @@
             if (t < waypoi.length - 1) {
                 requestAnimationFrame(animate);
             }
-            if (false) {
-
+            if (!chkFill.checked) {
+                imgContext.lineWidth = 1;
+                imgContext.strokeStyle = "rgba(55, 33, 55, 1)";
+                imgContext.beginPath();
+                imgContext.moveTo(waypoi[t - 1][0], waypoi[t - 1][1]);
+                imgContext.lineTo(waypoi[t][0], waypoi[t][1]);
+                imgContext.stroke();
             }
             else {
+                var fillColor = GetFillColor(fillCount);
+                var thecolor = "rgba("
+                    + Math.round(fillColor[0]) + ", "
+                    + Math.round(fillColor[1]) + ", "
+                    + Math.round(fillColor[2]) + ", 1)";
+
                 imgContext.lineWidth = 0.5;
-                imgContext.strokeStyle = "rgba("
-                        + Math.round(rgb1[0]) + ", "
-                        + Math.round(rgb1[1]) + ", "
-                        + Math.round(rgb1[2]) + ", 1)";
+                imgContext.strokeStyle = thecolor;
                 imgContext.beginPath();
                 imgContext.moveTo(waypoi[t - 1][0], waypoi[t - 1][1]);
                 imgContext.lineTo(waypoi[t][0], waypoi[t][1]);
@@ -198,11 +206,6 @@
                 if (startFill) {
                     //var fillColor = Math.abs(2 * fillCount % 300 - 150);
                     //var fillColor = Math.round(250 - Math.sqrt(fillCount / allTri.length) * 250);
-                    var fillColor = GetFillColor(fillCount);
-                    var thecolor = "rgba("
-                        + Math.round(fillColor[0]) + ", "
-                        + Math.round(fillColor[1]) + ", "
-                        + Math.round(fillColor[2]) + ", 1)";
                     imgContext.strokeStyle = thecolor;
                     //imgContext.moveTo(allTri[fillCount][0], allTri[fillCount][1]);
                     imgContext.moveTo(waypoi[t][0], waypoi[t][1]);
@@ -213,11 +216,11 @@
                     imgContext.fill();
 
                 }
-
-                if (waypoi[t][0] == allTri[fillCount][0] && waypoi[t][1] == allTri[fillCount][1]) {
-                    fillCount++;
-                }
             }
+            if (waypoi[t][0] == allTri[fillCount][0] && waypoi[t][1] == allTri[fillCount][1]) {
+                fillCount++;
+            }
+
             bgaContext.beginPath();
             bgaContext.moveTo(bgraX(waypoi[t - 1][0]), bgraY(waypoi[t - 1][1]));
             bgaContext.lineTo(bgraX(waypoi[t][0]), bgraY(waypoi[t][1]));
@@ -239,8 +242,7 @@
             var sum2 = Math.abs(rgb1[1] - rgb2[1]);
             var sum3 = Math.abs(rgb1[2] - rgb2[2]);
             var colorstepSum = sum1 + sum2 + sum3;
-            var colorperStep = colorstepSum / allTri.length;
-            var colorSum = fillCount * colorperStep;
+            var colorSum = Math.pow(fillCount / allTri.length, 1 / 2) * colorstepSum;
             if (colorSum < sum1)
                 return rgb2[0] > rgb1[0] ?
                     [rgb1[0] + colorSum, rgb1[1], rgb1[2]]
@@ -418,14 +420,23 @@
     <input type="checkbox" id="chkFill" />
     <label id="lblFill" for="chkFill">Fill</label>
 
-    <input name="color1" type="hidden" id="color_value1" value="110011" />>
+    <input name="color1" type="hidden" id="color_value1" value="b2ff00" />>
     <button class="jscolor {valueElement: 'color_value1', onFineChange:'update1(this)'}" id="btncolor1">color1</button>  
-    <input name="color2" type="hidden" id="color_value2" value="990099" />>
+    <input name="color2" type="hidden" id="color_value2" value="ff00ff" />>
     <button class="jscolor {valueElement: 'color_value2', onFineChange:'update2(this)'}" id="btncolor2">color2</button>    
 
-
-    <label id="lblAbout">About</label>
-   
+    <div id="hovAbout">
+        <label id="lblAbout">About</label>
+        <div id="divAbout">
+            <h2>A little doodling toy</h2>
+            <p class="about1">That based on <a href="http://youtu.be/vTvw_LGBtlM" target="_blank">this Youtube video</a>. </p>
+            <p class="about1">Click on canvas to define the vertices of the pattern outline.</p>
+            <p class="about1">Once a closing loop of polygon is formed, the browser will start drawing procedure.</p>
+            <p class="about1">Check the <b>Fill</b> checkbox to color the pattern.</p>
+            <p class="about2">This is the first gadget that I created in keyboqrd.com, other funny stuffs will be slowly added.</p>
+            <p class="about2"><b>Contact: keyboqrd@gmail.com</b></p>
+        </div>
+    </div>
     <style>
         #bgaHolder, #bgrHolder,#imgHolder, #triHolder, #eacHolder, #curHolder {
             position: absolute;
@@ -533,6 +544,44 @@
         	font-weight:bold;
         }
 
+        #hovAbout {
+            //display:none;
+        }
+
+        #hovAbout:hover #divAbout {
+            display:block;
+        }
+
+
+
+        #divAbout {
+            position:absolute;
+            right: 30px;
+            top: 26px;
+            width: 260px;
+            height: 230px;
+            background-color: #bb99bb;
+            display: none;
+            padding: 0px 10px 5px 10px;
+        }
+
+        #divAbout h2 {
+            font-family: Arial;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        #divAbout p {
+            font-family: Arial;
+        }
+        #divAbout .about1{
+            font-family: Arial;
+            font-size: 12px;
+        }
+        #divAbout .about2{
+            font-family: Arial;
+            font-size: 10px;
+        }
     </style>
 </body>
 </html>
